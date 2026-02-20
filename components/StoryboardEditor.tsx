@@ -287,22 +287,28 @@ const StoryboardEditor: React.FC<StoryboardEditorProps> = ({ episode, kb, onUpda
                     )}
                   </div>
 
-                  <div>
-                    <h4 className="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-black mb-2">Vidu 提示词</h4>
-                    <div className="bg-indigo-500/5 p-4 rounded-2xl border border-indigo-500/10 relative group/prompt">
-                      <p className="text-xs text-indigo-300/80 font-mono select-all pr-10 leading-relaxed">
-                        {shot.viduPrompt}
-                      </p>
+                  <div className="space-y-3">
+                    {/* SeedDance 正向提示词 */}
+                    <div>
+                      <h4 className="text-[10px] uppercase tracking-[0.2em] text-indigo-400 font-black mb-1">SeedDance 画面提示词</h4>
+                      <div className="bg-indigo-500/5 p-3 rounded-xl border border-indigo-500/10 relative group/prompt">
+                        <p className="text-xs text-indigo-300/80 font-mono select-all leading-relaxed">
+                          {shot.seedDancePrompt}
+                        </p>
+                      </div>
                     </div>
+                    
+                    {/* 负面约束提示词 */}
+                    {shot.negativePrompt && (
+                      <div>
+                        <h4 className="text-[10px] uppercase tracking-[0.2em] text-red-400/80 font-black mb-1">反向约束 (Negative Prompt)</h4>
+                        <div className="bg-red-500/5 p-2 rounded-xl border border-red-500/10">
+                          <p className="text-[10px] text-red-300/70 font-mono select-all leading-relaxed">
+                            {shot.negativePrompt}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export default StoryboardEditor;
