@@ -10,7 +10,7 @@ const App: React.FC = () => {
   // --- 核心状态控制 ---
   const [activeTab, setActiveTab] = useState<'hub' | 'kb' | 'episodes' | 'editor'>('hub');
   const [projects, setProjects] = useState<Project[]>(() => {
-    const saved = localStorage.getItem('vidu_projects_data');
+  const saved = localStorage.getItem('sd2_projects_data');
     return saved ? JSON.parse(saved) : [];
   });
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -18,7 +18,7 @@ const App: React.FC = () => {
 
   // --- 自动保存至浏览器缓存 ---
   useEffect(() => {
-    localStorage.setItem('vidu_projects_data', JSON.stringify(projects));
+    localStorage.setItem('sd2_projects_data', JSON.stringify(projects));
   }, [projects]);
 
   // --- 数据分发逻辑 ---
