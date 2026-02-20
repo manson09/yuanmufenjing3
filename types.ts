@@ -9,13 +9,14 @@ export interface KBFile {
 
 export interface Shot {
   shotNumber: number;
-  duration: string; // e.g. "3.5s"
-  shotType: string; // 特写, 全景, etc.
-  movement: string; // 环绕, 推近, etc.
-  visualDescription: string;
-  dialogue: string;
-  emotion: string; // 【愤怒】, 【冷酷】, etc.
-  viduPrompt: string; // Optimized for Vidu
+  duration: string;          
+  shotType: string;         
+  movement: string;          
+  visualDescription: string; 
+  dialogue: string;          
+  emotion: string;           
+  seedDancePrompt: string;   
+  negativePrompt?: string;  
 }
 
 export interface Episode {
