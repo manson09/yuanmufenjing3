@@ -1,6 +1,6 @@
 {
-  "name": "元幕专用分镜智能体",
-  "description": "基于 Gemini AI 的专业级动漫分镜生成系统，支持原著知识库锚定、时空拆解算法及 Vidu 深度提示词优化。",
+  "name": "元幕专用 SeedDance 2.0 智能分镜体",
+  "description": "基于 Gemini AI 的专业级动漫分镜生成系统，支持原著知识库锚定、SeedDance 2.0 连续动作承接算法及全局光影稳定技术。",
   "requestFramePermissions": [
     "camera",
     "microphone"
