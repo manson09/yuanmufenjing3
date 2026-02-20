@@ -76,8 +76,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, episodeCount
           <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
           <span>Gemini Pro 已连接</span>
         </div>
-        <div className="text-[10px] text-gray-500 leading-relaxed">
-          Vidu 优化模式开启，正在实施 2:00+ 时空拆解核心算法。
+       <div className="text-[10px] text-gray-500 leading-relaxed">
+          SeedDance 2.0 连续生成模式已开启，正在执行镜头组物理承接算法。
         </div>
       </div>
     </div>
