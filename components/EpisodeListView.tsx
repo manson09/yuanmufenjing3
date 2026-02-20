@@ -23,11 +23,12 @@ const EpisodeListView: React.FC<EpisodeListViewProps> = ({ episodes, onAdd, onDe
     setIsAdding(false);
   };
 
-  const calculateTotalDuration = (episode: Episode) => {
+const calculateTotalDuration = (episode: Episode) => {
     if (!episode.shots || episode.shots.length === 0) return 0;
     return episode.shots.reduce((acc, shot) => {
-      const d = parseFloat(shot.duration) || 0;
-      return acc + d;
+      const match = shot.duration.match(/(\d+)/);
+      const d = match ? parseFloat(match[1]) : 0;
+      return acc + (shot.duration.includes('-') ? 3 : d); 
     }, 0);
   };
 
