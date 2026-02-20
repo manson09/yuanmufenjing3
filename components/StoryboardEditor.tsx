@@ -85,7 +85,7 @@ const StoryboardEditor: React.FC<StoryboardEditorProps> = ({ episode, kb, onUpda
     }
   };
 
-  // 4. 导出 Word 逻辑
+  
   const exportToWord = () => {
     if (!episode.shots || episode.shots.length === 0) {
       alert("没有可导出的分镜数据");
@@ -99,7 +99,10 @@ const StoryboardEditor: React.FC<StoryboardEditorProps> = ({ episode, kb, onUpda
         <td style="border: 1px solid #dddddd; padding: 10px; color: #2563eb; font-weight: bold; font-size: 10pt;">${s.shotType} / ${s.movement}</td>
         <td style="border: 1px solid #dddddd; padding: 10px; font-size: 10.5pt; line-height: 1.5;">${s.visualDescription}</td>
         <td style="border: 1px solid #dddddd; padding: 10px; font-style: italic; color: #4b5563; font-size: 10pt;">${s.dialogue || '-'}</td>
-        <td style="border: 1px solid #dddddd; padding: 10px; font-size: 9pt; font-family: 'Courier New', monospace; color: #4f46e5; background-color: #f5f7ff;">${s.viduPrompt}</td>
+        <td style="border: 1px solid #dddddd; padding: 10px; font-size: 9pt; font-family: 'Courier New', monospace; background-color: #f5f7ff;">
+          <div style="color: #4f46e5; margin-bottom: 8px;"><b>[正向提示词]</b><br/>${s.seedDancePrompt}</div>
+          <div style="color: #ef4444; font-size: 8.5pt;"><b>[负面约束]</b><br/>${s.negativePrompt || '无'}</div>
+        </td>
       </tr>
     `).join('');
 
@@ -119,18 +122,18 @@ const StoryboardEditor: React.FC<StoryboardEditorProps> = ({ episode, kb, onUpda
       </head>
       <body>
         <div class="header">
-          <p class="title">专业动画分镜脚本 (Vidu 深度拆解版)</p>
+          <p class="title">专业动画分镜脚本 (SeedDance 2.0 连续生成版)</p>
           <div class="meta">剧本标题：${episode.title} | 导出时间：${new Date().toLocaleString()} | 镜头总数：${episode.shots.length}</div>
         </div>
         <table>
           <thead>
             <tr>
-              <th style="width: 6%;">镜号</th>
+              <th style="width: 5%;">镜号</th>
               <th style="width: 6%;">时长</th>
-              <th style="width: 13%;">视听语言</th>
-              <th style="width: 28%;">画面视觉描述</th>
+              <th style="width: 12%;">视听语言</th>
+              <th style="width: 25%;">画面视觉描述</th>
               <th style="width: 15%;">原著台词/OS</th>
-              <th style="width: 32%;">Vidu 提示词</th>
+              <th style="width: 37%;">SeedDance 提示词 (正/反向)</th>
             </tr>
           </thead>
           <tbody>
@@ -146,6 +149,17 @@ const StoryboardEditor: React.FC<StoryboardEditorProps> = ({ episode, kb, onUpda
     const link = document.createElement('a');
     link.href = url;
     link.download = `${episode.title}_专业分镜脚本.doc`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+    const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${episode.title}_分镜脚本.doc`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
