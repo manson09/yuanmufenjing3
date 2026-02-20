@@ -7,8 +7,8 @@ const openai = new OpenAI({
   baseURL: import.meta.env.VITE_BASE_URL || "https://openrouter.ai/api/v1",
   dangerouslyAllowBrowser: true,
   defaultHeaders: {
-    "HTTP-Referer": "https://yuanmufenjing1.pages.dev",
-    "X-Title": "ViduAnime Master",
+    "HTTP-Referer": "https://yuanmufenjing3.pages.dev",
+    "X-Title": "Anime Master",
   }
 });
 
@@ -230,26 +230,56 @@ const STORYBOARD_PROMPT = `
 
 `;
 
-function parseSeedDanceText(rawText: string, startShotNumber: number = 1): Partial<Shot>[] {
-  const shots: Partial<Shot>[] = [];
-  const lines = rawText.split('\n');
-
+/**
+ * SeedDance 2.0 专属解析器
+ * 完美匹配新的 types.ts 结构
+ */
+function parseSeedDanceText(rawText: string, startShotNumber: number = 1): Shot[] {
+  const shots: Shot[] = [];
   
-  const shotRegex = /^镜头\s*(\d+)\s*[（(](.*?)[)）]\s*[：:]\s*(.*)/;
+  // 1. 提取大模型生成的【全局光影/画风/约束】
+  const styleMatch = rawText.match(/【风格】(.*?)(?=\n|$)/);
+  const lightMatch = rawText.match(/【光影】(.*?)(?=\n|$)/);
+  const qualityMatch = rawText.match(/【画质】(.*?)(?=\n|$)/);
+  const negMatch = rawText.match(/【负面约束】(.*?)(?=\n|$)/);
+
+  const globalStyle = styleMatch ? styleMatch[1].trim() : "2D动漫风格";
+  const globalLight = lightMatch ? lightMatch[1].trim() : "";
+  const globalQuality = qualityMatch ? qualityMatch[1].trim() : "高清锐利，人物不漂移";
+  const negativePrompt = negMatch ? negMatch[1].trim() : "模糊，噪点，扭曲，穿帮，多余肢体";
+
+  const lines = rawText.split('\n');
+  
+  // 2. 正则表达式：精准抓取【时间】、【景别】、【运镜】、【画面内容】
+  const shotRegex = /^镜头\s*\d+\s*[（(](.*?)[)）]\s*[：:]\s*(?:【(.*?)】)?\s*[,，]?\s*(?:【(.*?)】)?\s*[,，]?\s*(.*)/;
 
   let currentShotIndex = startShotNumber;
 
   for (const line of lines) {
     const trimmedLine = line.trim();
-    if (!trimmedLine) continue;
+    if (!trimmedLine.startsWith("镜头")) continue;
 
     const match = trimmedLine.match(shotRegex);
     if (match) {
+      const duration = match[1] || "";             // 提取 (0-3秒)
+      const shotType = match[2] || "中景";         // 提取景别
+      const movement = match[3] || "固定";         // 提取运镜
+      const visualDesc = match[4] || trimmedLine;  // 提取画面内容
+
+      // 3. 将全局设定和当前动作组装成终极 SeedDance Prompt
+      const promptParts = [globalStyle, globalLight, globalQuality, shotType, movement, visualDesc].filter(Boolean);
+      const finalPrompt = promptParts.join("，");
+
       shots.push({
         shotNumber: currentShotIndex++, 
-        timeRange: match[2],           
-        visualDescription: match[3],    
-        viduPrompt: match[3],          
+        duration: duration,
+        shotType: shotType,
+        movement: movement,
+        visualDescription: visualDesc,
+        dialogue: "", 
+        emotion: "",  
+        seedDancePrompt: finalPrompt,      // 正向提示词（光影+动作）
+        negativePrompt: negativePrompt     // 反向提示词（防崩约束）
       });
     }
   }
@@ -284,7 +314,6 @@ export async function generateStoryboard(
     ? `【视觉设定参考（仅限查外貌，严禁看剧情）】：\n${kb.map(f => f.content).join('\n').slice(0, 8000)}`
     : "（暂无）";
 
-
   const lines = fullScript.split('\n').filter(l => l.trim().length > 0);
   const midIndex = Math.floor(lines.length / 2);
   const scriptPart1 = lines.slice(0, midIndex).join('\n');
@@ -292,19 +321,17 @@ export async function generateStoryboard(
   const pivotLine = lines[midIndex - 1]; // 第一阶段的最后一行
 
   try {
-
     console.log("🚀 [第一阶段] 全局分析高潮分布，生成前半段分镜...");
     const rawContent1 = await fetchWithStream([
       { role: "system", content: STORYBOARD_PROMPT + (STYLE_PROMPTS[style] || "") },
       { role: "system", content: kbContext },
       { 
         role: "user", 
- 
-        content: `【本集完整目标剧本（仅供节奏识别参考）】：\n${fullScript}\n\n【当前具体任务】：请仅针对上述剧本的【前半部分内容】生成第一个镜头组。请严格按照要求输出【总时长】等全局信息，以及“镜头1（X-X秒）：”的文本格式。\n\n【待处理前半段内容】：\n${scriptPart1}`
+        content: `【本集完整目标剧本（仅供节奏识别参考）】：\n${fullScript}\n\n【当前具体任务】：请仅针对上述剧本的【前半部分内容】生成第一个镜头组。请严格按照要求输出【总时长】等全局信息，以及“镜头1（X-X秒）：【景别】，【运镜】，【画面内容】”的文本格式。\n\n【待处理前半段内容】：\n${scriptPart1}`
       }
     ]);
 
-    const shotsPart1 = parseSeedDanceText(rawContent1, 1) as Shot[];
+    const shotsPart1 = parseSeedDanceText(rawContent1, 1);
     const p1Count = shotsPart1.length;
     // 获取最后一镜的画面内容，作为 SeedDance 的【承接状态说明】
     const p1EndDesc = shotsPart1[p1Count - 1]?.visualDescription || "画面平稳结束";
@@ -332,7 +359,7 @@ export async function generateStoryboard(
       }
     ]);
 
-    const shotsPart2 = parseSeedDanceText(rawContent2, p1Count + 1) as Shot[];
+    const shotsPart2 = parseSeedDanceText(rawContent2, p1Count + 1);
     const allShots = [...shotsPart1, ...shotsPart2];
 
     // 应用 SeedDance 的动作承接逻辑
@@ -350,16 +377,13 @@ export async function generateStoryboard(
 function injectActionCarryover(currentShot: Shot, prevShot?: Shot): Shot {
   if (!prevShot) return currentShot;
   
+  const isOngoing = currentShot.visualDescription.includes("接前") || currentShot.visualDescription.includes("接上");
+  const carryoverText = `【承接上镜动作：${prevShot.visualDescription}】 `;
 
   return {
     ...currentShot,
-
-    visualDescription: currentShot.visualDescription.includes("接前") 
-      ? currentShot.visualDescription 
-      : `【接上镜状态】${currentShot.visualDescription}`,
-      
-
-    viduPrompt: currentShot.viduPrompt || currentShot.visualDescription
+    visualDescription: isOngoing ? currentShot.visualDescription : `【接上镜状态】${currentShot.visualDescription}`,
+    seedDancePrompt: isOngoing ? currentShot.seedDancePrompt : `${carryoverText}${currentShot.seedDancePrompt}`
   };
 }
 
@@ -377,12 +401,11 @@ export async function regenerateSingleShot(
 
   const raw = await fetchWithStream([
     { role: "system", content: STORYBOARD_PROMPT },
-    { role: "user", content: `${carryOverContext}\n\n重新设计第 ${shotToRegenerate.shotNumber} 镜。请严格按照“镜头X（X-X秒）：【景别】...”的纯文本格式输出，严禁擅自续写后续剧情。` }
+    { role: "user", content: `${carryOverContext}\n\n重新设计第 ${shotToRegenerate.shotNumber} 镜。请严格按照“镜头X（X-X秒）：【景别】，【运镜】，【内容】”的纯文本格式输出，严禁擅自续写后续剧情。` }
   ]);
   
-
   const parsedShots = parseSeedDanceText(raw, shotToRegenerate.shotNumber);
-  const newShotData = (parsedShots.length > 0 ? parsedShots[0] : shotToRegenerate) as Shot;
+  const newShotData = parsedShots.length > 0 ? parsedShots[0] : shotToRegenerate;
   
   return injectActionCarryover(newShotData, previousShot);
 }
