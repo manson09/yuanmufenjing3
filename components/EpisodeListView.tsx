@@ -43,7 +43,7 @@ const calculateTotalDuration = (episode: Episode) => {
       <header className="mb-8 flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">剧集管理系统</h2>
-          <p className="text-gray-400 text-sm">输入原著剧本，AI 将自动锁定视觉锚点并计算分镜时长。</p>
+          <p className="text-gray-400 text-sm"> AI 将执行物理连续性分析，生成符合 SeedDance 2.0 标准的连续分镜。</p>
         </div>
         <button
           onClick={() => setIsAdding(true)}
@@ -174,7 +174,7 @@ const calculateTotalDuration = (episode: Episode) => {
             </div>
             <h3 className="text-xl text-white font-medium mb-2">暂无剧集数据</h3>
             <p className="text-gray-500 mb-8 max-w-sm mx-auto text-sm">
-              点击右上角“新建剧集”，开始利用时空拆解法制作 2 分钟以上的动漫分镜表。
+              点击右上角“新建剧集”，开始制作具备动作承接关系的专业分镜表，适配 SeedDance 2.0 连续生成。
             </p>
           </div>
         )}
